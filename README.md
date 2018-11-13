@@ -35,7 +35,7 @@ Algorithms
  * ✓ __groestl__ (Groestlcoin)
  * ✓ __lyra2RE__ (Lyrabar, Cryptocoin)
  * ✓ __lyra2REv2__ (VertCoin [VTC])
- * ✓ __lyra2REv2c0ban__ (c0ban [RYO])
+ * ✓ __llyra2REvc0ban__ (c0ban [RYO])
  * ✓ __myr-gr__ (Myriad-Groestl)
  * ✓ __neoscrypt__ (Feathercoin)
  * ✓ __nist5__ (MistCoin [MIC], TalkCoin [TAC], ...)
