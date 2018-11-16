@@ -46,33 +46,23 @@ void lyra2revc0ban_hash_AVX(void *state, const void *input, __m256i *wholeMatrix
 		sph_cubehash256(hashB + i, hashA + i, 32);
 	}
 
-	hashA[0] = _mm256_unpacklo_epi32(hashB[0], hashB[1]); // 00 10 01 11 04 14 05 15
-	hashA[1] = _mm256_unpackhi_epi32(hashB[0], hashB[1]); // 02 12 03 13 06 16 07 17
-	hashA[2] = _mm256_unpacklo_epi32(hashB[2], hashB[3]); // 20 30 21 31 24 34 25 35
-	hashA[3] = _mm256_unpackhi_epi32(hashB[2], hashB[3]); // 22 32 23 33 26 36 27 37
-	hashA[4] = _mm256_unpacklo_epi32(hashB[4], hashB[5]); // 40 50 41 51 44 54 45 55
-	hashA[5] = _mm256_unpackhi_epi32(hashB[4], hashB[5]); // 42 52 43 53 46 56 47 57
-	hashA[6] = _mm256_unpacklo_epi32(hashB[6], hashB[7]); // 60 70 61 71 64 74 65 75
-	hashA[7] = _mm256_unpackhi_epi32(hashB[6], hashB[7]); // 62 72 63 73 66 76 67 77
+	hashB[0] = _mm256_unpacklo_epi64(hashA[0], hashA[1]); // 00 01 02 03 20 21 22 23
+	hashB[1] = _mm256_unpacklo_epi64(hashA[2], hashA[3]); // 04 05 06 07 24 25 26 27
+	hashB[2] = _mm256_unpacklo_epi64(hashA[4], hashA[5]); // 10 11 12 13 30 31 32 33
+	hashB[3] = _mm256_unpacklo_epi64(hashA[6], hashA[7]); // 14 15 16 17 34 35 36 37
+	hashB[4] = _mm256_unpackhi_epi64(hashA[0], hashA[1]); // 08 09 0A 0B 28 29 2A 2B
+	hashB[5] = _mm256_unpackhi_epi64(hashA[2], hashA[3]); // 0C 0D 0E 0F 2C 2D 2E 2F
+	hashB[6] = _mm256_unpackhi_epi64(hashA[4], hashA[5]); // 18 19 1A 1B 38 39 3A 3B
+	hashB[7] = _mm256_unpackhi_epi64(hashA[6], hashA[7]); // 1C 1D 1E 1F 3C 3D 3E 3F
 
-	hashB[0] = _mm256_unpacklo_epi64(hashA[0], hashA[2]); // 00 10 20 30 04 14 24 34
-	hashB[1] = _mm256_unpackhi_epi64(hashA[0], hashA[2]); // 01 11 21 31 05 15 25 35
-	hashB[2] = _mm256_unpacklo_epi64(hashA[1], hashA[3]); // 02 12 22 32 06 16 26 36
-	hashB[3] = _mm256_unpackhi_epi64(hashA[1], hashA[3]); // 03 13 23 33 07 17 27 37
-	hashB[4] = _mm256_unpacklo_epi64(hashA[4], hashA[6]); // 40 50 60 70 44 54 64 74
-	hashB[5] = _mm256_unpackhi_epi64(hashA[4], hashA[6]); // 41 51 61 71 45 55 65 75
-	hashB[6] = _mm256_unpacklo_epi64(hashA[5], hashA[7]); // 42 52 62 72 46 56 66 76
-	hashB[7] = _mm256_unpackhi_epi64(hashA[5], hashA[7]); // 43 53 63 73 47 57 67 77
-
-	hashA[0] = _mm256_permute2x128_si256(hashB[0], hashB[4], 0x20); // 00 10 20 30 40 50 60 70
-	hashA[1] = _mm256_permute2x128_si256(hashB[1], hashB[5], 0x20); // 01 11 21 31 41 51 61 71
-	hashA[2] = _mm256_permute2x128_si256(hashB[2], hashB[6], 0x20); // 02 12 22 32 42 52 62 72
-	hashA[3] = _mm256_permute2x128_si256(hashB[3], hashB[7], 0x20); // 03 13 23 33 43 53 63 73
-	hashA[4] = _mm256_permute2x128_si256(hashB[0], hashB[4], 0x31); // 04 14 24 34 44 54 64 74
-	hashA[5] = _mm256_permute2x128_si256(hashB[1], hashB[5], 0x31); // 05 15 25 35 45 55 65 75
-	hashA[6] = _mm256_permute2x128_si256(hashB[2], hashB[6], 0x31); // 06 16 26 36 46 56 66 76
-	hashA[7] = _mm256_permute2x128_si256(hashB[3], hashB[7], 0x31); // 07 17 27 37 47 57 67 77
-
+	hashA[0] = _mm256_permute2x128_si256(hashB[0], hashB[1], 0x20); // 00 01 02 03 04 05 06 07
+	hashA[1] = _mm256_permute2x128_si256(hashB[4], hashB[5], 0x20); // 08 09 0A 0B 0C 0D 0E 0F
+	hashA[2] = _mm256_permute2x128_si256(hashB[2], hashB[3], 0x20); // 10 11 12 13 14 15 16 17
+	hashA[3] = _mm256_permute2x128_si256(hashB[6], hashB[7], 0x20); // 18 19 1A 1B 1C 1D 1E 1F
+	hashA[4] = _mm256_permute2x128_si256(hashB[0], hashB[1], 0x31); // 20 21 22 23 24 25 26 27
+	hashA[5] = _mm256_permute2x128_si256(hashB[4], hashB[5], 0x31); // 28 29 2A 2B 2C 2D 2E 2F
+	hashA[6] = _mm256_permute2x128_si256(hashB[2], hashB[3], 0x31); // 30 31 32 33 34 35 36 37
+	hashA[7] = _mm256_permute2x128_si256(hashB[6], hashB[7], 0x31); // 38 39 3A 3B 3C 3D 3E 3F
 	for (int i = 0; i < 8; i++)
 	{
 		sph_cubehash256(hashB + i, hashA + i, 32);
@@ -130,23 +120,32 @@ void lyra2revc0ban_hash_AVX(void *state, const void *input, __m256i *wholeMatrix
 	sph_keccak256_32_AVX(hashA + 0, hashB + 0, 32);
 	sph_keccak256_32_AVX(hashA + 4, hashB + 4, 32);
 
-	hashB[0] = _mm256_unpacklo_epi64(hashA[0], hashA[1]); // 00 01 02 03 20 21 22 23
-	hashB[1] = _mm256_unpacklo_epi64(hashA[2], hashA[3]); // 04 05 06 07 24 25 26 27
-	hashB[2] = _mm256_unpacklo_epi64(hashA[4], hashA[5]); // 10 11 12 13 30 31 32 33
-	hashB[3] = _mm256_unpacklo_epi64(hashA[6], hashA[7]); // 14 15 16 17 34 35 36 37
-	hashB[4] = _mm256_unpackhi_epi64(hashA[0], hashA[1]); // 08 09 0A 0B 28 29 2A 2B
-	hashB[5] = _mm256_unpackhi_epi64(hashA[2], hashA[3]); // 0C 0D 0E 0F 2C 2D 2E 2F
-	hashB[6] = _mm256_unpackhi_epi64(hashA[4], hashA[5]); // 18 19 1A 1B 38 39 3A 3B
-	hashB[7] = _mm256_unpackhi_epi64(hashA[6], hashA[7]); // 1C 1D 1E 1F 3C 3D 3E 3F
+	hashA[0] = _mm256_unpacklo_epi32(hashB[0], hashB[1]); // 00 10 01 11 04 14 05 15
+	hashA[1] = _mm256_unpackhi_epi32(hashB[0], hashB[1]); // 02 12 03 13 06 16 07 17
+	hashA[2] = _mm256_unpacklo_epi32(hashB[2], hashB[3]); // 20 30 21 31 24 34 25 35
+	hashA[3] = _mm256_unpackhi_epi32(hashB[2], hashB[3]); // 22 32 23 33 26 36 27 37
+	hashA[4] = _mm256_unpacklo_epi32(hashB[4], hashB[5]); // 40 50 41 51 44 54 45 55
+	hashA[5] = _mm256_unpackhi_epi32(hashB[4], hashB[5]); // 42 52 43 53 46 56 47 57
+	hashA[6] = _mm256_unpacklo_epi32(hashB[6], hashB[7]); // 60 70 61 71 64 74 65 75
+	hashA[7] = _mm256_unpackhi_epi32(hashB[6], hashB[7]); // 62 72 63 73 66 76 67 77
 
-	hashA[0] = _mm256_permute2x128_si256(hashB[0], hashB[1], 0x20); // 00 01 02 03 04 05 06 07
-	hashA[1] = _mm256_permute2x128_si256(hashB[4], hashB[5], 0x20); // 08 09 0A 0B 0C 0D 0E 0F
-	hashA[2] = _mm256_permute2x128_si256(hashB[2], hashB[3], 0x20); // 10 11 12 13 14 15 16 17
-	hashA[3] = _mm256_permute2x128_si256(hashB[6], hashB[7], 0x20); // 18 19 1A 1B 1C 1D 1E 1F
-	hashA[4] = _mm256_permute2x128_si256(hashB[0], hashB[1], 0x31); // 20 21 22 23 24 25 26 27
-	hashA[5] = _mm256_permute2x128_si256(hashB[4], hashB[5], 0x31); // 28 29 2A 2B 2C 2D 2E 2F
-	hashA[6] = _mm256_permute2x128_si256(hashB[2], hashB[3], 0x31); // 30 31 32 33 34 35 36 37
-	hashA[7] = _mm256_permute2x128_si256(hashB[6], hashB[7], 0x31); // 38 39 3A 3B 3C 3D 3E 3F
+	hashB[0] = _mm256_unpacklo_epi64(hashA[0], hashA[2]); // 00 10 20 30 04 14 24 34
+	hashB[1] = _mm256_unpackhi_epi64(hashA[0], hashA[2]); // 01 11 21 31 05 15 25 35
+	hashB[2] = _mm256_unpacklo_epi64(hashA[1], hashA[3]); // 02 12 22 32 06 16 26 36
+	hashB[3] = _mm256_unpackhi_epi64(hashA[1], hashA[3]); // 03 13 23 33 07 17 27 37
+	hashB[4] = _mm256_unpacklo_epi64(hashA[4], hashA[6]); // 40 50 60 70 44 54 64 74
+	hashB[5] = _mm256_unpackhi_epi64(hashA[4], hashA[6]); // 41 51 61 71 45 55 65 75
+	hashB[6] = _mm256_unpacklo_epi64(hashA[5], hashA[7]); // 42 52 62 72 46 56 66 76
+	hashB[7] = _mm256_unpackhi_epi64(hashA[5], hashA[7]); // 43 53 63 73 47 57 67 77
+
+	hashA[0] = _mm256_permute2x128_si256(hashB[0], hashB[4], 0x20); // 00 10 20 30 40 50 60 70
+	hashA[1] = _mm256_permute2x128_si256(hashB[1], hashB[5], 0x20); // 01 11 21 31 41 51 61 71
+	hashA[2] = _mm256_permute2x128_si256(hashB[2], hashB[6], 0x20); // 02 12 22 32 42 52 62 72
+	hashA[3] = _mm256_permute2x128_si256(hashB[3], hashB[7], 0x20); // 03 13 23 33 43 53 63 73
+	hashA[4] = _mm256_permute2x128_si256(hashB[0], hashB[4], 0x31); // 04 14 24 34 44 54 64 74
+	hashA[5] = _mm256_permute2x128_si256(hashB[1], hashB[5], 0x31); // 05 15 25 35 45 55 65 75
+	hashA[6] = _mm256_permute2x128_si256(hashB[2], hashB[6], 0x31); // 06 16 26 36 46 56 66 76
+	hashA[7] = _mm256_permute2x128_si256(hashB[3], hashB[7], 0x31); // 07 17 27 37 47 57 67 77
 
 	sph_bmw256_AVX(hashB, hashA, 32);
 
@@ -213,23 +212,14 @@ void lyra2revc0ban_hash_SSE(void *state, const void *input, __m128i *wholeMatrix
 			//sph_cubehash256(hashB + i, hashA + i, 32);
 		}
 
-		hashA[0] = _mm_unpacklo_epi32(hashB[0], hashB[2]); // 00 08 01 09
-		hashA[1] = _mm_unpackhi_epi32(hashB[0], hashB[2]); // 02 0A 03 0B
-		hashA[2] = _mm_unpacklo_epi32(hashB[1], hashB[3]); // 04 0C 05 0D
-		hashA[3] = _mm_unpackhi_epi32(hashB[1], hashB[3]); // 06 0E 07 0F
-		hashA[4] = _mm_unpacklo_epi32(hashB[4], hashB[6]); // 10 18 11 19
-		hashA[5] = _mm_unpackhi_epi32(hashB[4], hashB[6]); // 12 1A 13 1B
-		hashA[6] = _mm_unpacklo_epi32(hashB[5], hashB[7]); // 14 1C 15 1D
-		hashA[7] = _mm_unpackhi_epi32(hashB[5], hashB[7]); // 16 1E 17 1F
-
-		hashB[0] = _mm_unpacklo_epi64(hashA[0], hashA[4]); // 00 08 10 18
-		hashB[1] = _mm_unpackhi_epi64(hashA[0], hashA[4]); // 01 09 11 19
-		hashB[2] = _mm_unpacklo_epi64(hashA[1], hashA[5]); // 02 0A 12 1A
-		hashB[3] = _mm_unpackhi_epi64(hashA[1], hashA[5]); // 03 0B 13 1B
-		hashB[4] = _mm_unpacklo_epi64(hashA[2], hashA[6]); // 04 1C 14 1C
-		hashB[5] = _mm_unpackhi_epi64(hashA[2], hashA[6]); // 05 1D 15 1D
-		hashB[6] = _mm_unpacklo_epi64(hashA[3], hashA[7]); // 06 1E 16 1E
-		hashB[7] = _mm_unpackhi_epi64(hashA[3], hashA[7]); // 07 1F 17 1F
+		hashB[0] = _mm_unpacklo_epi64(hashA[0], hashA[1]); // 00 01 02 03
+		hashB[1] = _mm_unpacklo_epi64(hashA[2], hashA[3]); // 04 05 06 07
+		hashB[2] = _mm_unpackhi_epi64(hashA[0], hashA[1]); // 08 09 0A 0B
+		hashB[3] = _mm_unpackhi_epi64(hashA[2], hashA[3]); // 0C 0D 0E 0F
+		hashB[4] = _mm_unpacklo_epi64(hashA[4], hashA[5]); // 10 11 12 13
+		hashB[5] = _mm_unpacklo_epi64(hashA[6], hashA[7]); // 14 15 16 17
+		hashB[6] = _mm_unpackhi_epi64(hashA[4], hashA[5]); // 18 19 1A 1B
+		hashB[7] = _mm_unpackhi_epi64(hashA[6], hashA[7]); // 1C 1D 1E 1F
 
 		for (int i = 0; i < 8; i += 2)
 		{
@@ -265,14 +255,23 @@ void lyra2revc0ban_hash_SSE(void *state, const void *input, __m128i *wholeMatrix
 		sph_keccak256_32_SSE2(hashA + 0, hashB + 0, 32);
 		sph_keccak256_32_SSE2(hashA + 4, hashB + 4, 32);
 
-		hashB[0] = _mm_unpacklo_epi64(hashA[0], hashA[1]); // 00 01 02 03
-		hashB[1] = _mm_unpacklo_epi64(hashA[2], hashA[3]); // 04 05 06 07
-		hashB[2] = _mm_unpackhi_epi64(hashA[0], hashA[1]); // 08 09 0A 0B
-		hashB[3] = _mm_unpackhi_epi64(hashA[2], hashA[3]); // 0C 0D 0E 0F
-		hashB[4] = _mm_unpacklo_epi64(hashA[4], hashA[5]); // 10 11 12 13
-		hashB[5] = _mm_unpacklo_epi64(hashA[6], hashA[7]); // 14 15 16 17
-		hashB[6] = _mm_unpackhi_epi64(hashA[4], hashA[5]); // 18 19 1A 1B
-		hashB[7] = _mm_unpackhi_epi64(hashA[6], hashA[7]); // 1C 1D 1E 1F
+		hashA[0] = _mm_unpacklo_epi32(hashB[0], hashB[2]); // 00 08 01 09
+		hashA[1] = _mm_unpackhi_epi32(hashB[0], hashB[2]); // 02 0A 03 0B
+		hashA[2] = _mm_unpacklo_epi32(hashB[1], hashB[3]); // 04 0C 05 0D
+		hashA[3] = _mm_unpackhi_epi32(hashB[1], hashB[3]); // 06 0E 07 0F
+		hashA[4] = _mm_unpacklo_epi32(hashB[4], hashB[6]); // 10 18 11 19
+		hashA[5] = _mm_unpackhi_epi32(hashB[4], hashB[6]); // 12 1A 13 1B
+		hashA[6] = _mm_unpacklo_epi32(hashB[5], hashB[7]); // 14 1C 15 1D
+		hashA[7] = _mm_unpackhi_epi32(hashB[5], hashB[7]); // 16 1E 17 1F
+
+		hashB[0] = _mm_unpacklo_epi64(hashA[0], hashA[4]); // 00 08 10 18
+		hashB[1] = _mm_unpackhi_epi64(hashA[0], hashA[4]); // 01 09 11 19
+		hashB[2] = _mm_unpacklo_epi64(hashA[1], hashA[5]); // 02 0A 12 1A
+		hashB[3] = _mm_unpackhi_epi64(hashA[1], hashA[5]); // 03 0B 13 1B
+		hashB[4] = _mm_unpacklo_epi64(hashA[2], hashA[6]); // 04 1C 14 1C
+		hashB[5] = _mm_unpackhi_epi64(hashA[2], hashA[6]); // 05 1D 15 1D
+		hashB[6] = _mm_unpacklo_epi64(hashA[3], hashA[7]); // 06 1E 16 1E
+		hashB[7] = _mm_unpackhi_epi64(hashA[3], hashA[7]); // 07 1F 17 1F
 
 		sph_bmw256_SSE2(hashA, hashB, 32);
 
