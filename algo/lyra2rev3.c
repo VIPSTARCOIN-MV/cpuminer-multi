@@ -24,11 +24,11 @@ void lyra2rev3_hash_AVX(void *state, const void *input, __m256i *wholeMatrix, in
 	__m256i hashA[8], hashB[8];
 
 	if (flag) {
-		sph_blake256_80_init(wholeMatrix2, input, 80);
+		sph_blake256_80_init(wholeMatrix2, input, 144);
 		flag = 0;
 	}
 
-	sph_blake256_80_AVX(hashA, input, 80, wholeMatrix2);
+	sph_blake256_80_AVX(hashA, input, 144, wholeMatrix2);
 
 	hashB[0] = _mm256_unpacklo_epi32(hashA[0], hashA[1]); // 00 01 08 09 20 21 28 29
 	hashB[1] = _mm256_unpacklo_epi32(hashA[2], hashA[3]); // 02 03 0A 0B 22 23 2A 2B
@@ -117,13 +117,13 @@ void lyra2rev3_hash_SSE(void *state, const void *input, __m128i *wholeMatrix, in
 	__m128i *hashB = hash + 16;
 
 	if (flag) {
-		sph_blake256_80_init(wholeMatrix2, input, 80);
+		sph_blake256_80_init(wholeMatrix2, input, 144);
 		flag = 0;
 	}
 
 	for (int j = 0; j < 2; j++, hashA += 8, hashB += 8)
 	{
-		sph_blake256_80_SSE2(hashA, input, 80, wholeMatrix2);
+		sph_blake256_80_SSE2(hashA, input, 144, wholeMatrix2);
 
 		hashB[0] = _mm_unpacklo_epi32(hashA[0], hashA[1]); // 00 01 08 09
 		hashB[1] = _mm_unpacklo_epi32(hashA[2], hashA[3]); // 02 03 0A 0B
