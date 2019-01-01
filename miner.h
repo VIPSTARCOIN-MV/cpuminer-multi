@@ -218,6 +218,7 @@ int scanhash_keccak(int thr_id, struct work *work, uint32_t max_nonce, uint64_t 
 int scanhash_luffa(int thr_id, struct work *work, uint32_t max_nonce, uint64_t *hashes_done);
 int scanhash_lyra2(int thr_id, struct work *work, uint32_t max_nonce, uint64_t *hashes_done);
 int scanhash_lyra2rev2(int thr_id, struct work *work, uint32_t max_nonce, uint64_t *hashes_done);
+int scanhash_lyra2rev3(int thr_id, struct work *work, uint32_t max_nonce, uint64_t *hashes_done);
 int scanhash_lyra2revc0ban(int thr_id, struct work *work, uint32_t max_nonce, uint64_t *hashes_done);
 int scanhash_myriad(int thr_id, struct work *work, uint32_t max_nonce, uint64_t *hashes_done);
 int scanhash_neoscrypt(int thr_id, struct work *work, uint32_t max_nonce, uint64_t *hashes_done, uint32_t profile);
@@ -398,6 +399,8 @@ struct stratum_job {
 	unsigned char version[4];
 	unsigned char nbits[4];
 	unsigned char ntime[4];
+	unsigned char stateroot[32];
+	unsigned char utxoroot[32];
 	bool clean;
 	double diff;
 };
@@ -494,10 +497,12 @@ void luffahash(void *output, const void *input);
 #ifndef SSE
 void lyra2_hash(void *state, const void *input, __m256i *wholeMatrix);
 void lyra2rev2_hash(void *state, const void *input, __m256i *wholeMatrix, int32_t *flag, __m256i *wholeMatrix2);
+void lyra2rev3_hash(void *state, const void *input, __m256i *wholeMatrix, int32_t *flag, __m256i *wholeMatrix2);
 void lyra2revc0ban_hash(void *state, const void *input, __m256i *wholeMatrix, int32_t *flag, __m256i *wholeMatrix2);
 #else
 void lyra2_hash_SSE(void *state, const void *input, __m128i *wholeMatrix);
 void lyra2rev2_hash_SSE(void *state, const void *input, __m128i *wholeMatrix, int32_t *flag, __m128i *wholeMatrix2);
+void lyra2rev3_hash_SSE(void *state, const void *input, __m128i *wholeMatrix, int32_t *flag, __m128i *wholeMatrix2);
 void lyra2revc0ban_hash_SSE(void *state, const void *input, __m128i *wholeMatrix, int32_t *flag, __m128i *wholeMatrix2);
 #endif
 void myriadhash(void *output, const void *input);
