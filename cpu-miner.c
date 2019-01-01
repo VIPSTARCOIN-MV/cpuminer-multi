@@ -96,6 +96,7 @@ enum algos {
 	ALGO_LUFFA,       /* Luffa (Joincoin, Doom) */
 	ALGO_LYRA2,       /* Lyra2RE */
 	ALGO_LYRA2REV2,   /* Lyra2REv2 (Vertcoin) */
+	ALGO_LYRA2REV3,   /* Lyra2REv3 (VIPSTARCOIN-MV Only) */
 	ALGO_LYRA2REVC0BAN,/* Lyra2REvc0ban (c0ban) */
 	ALGO_MYR_GR,      /* Myriad Groestl */
 	ALGO_NIST5,       /* Nist5 */
@@ -142,6 +143,7 @@ static const char *algo_names[] = {
 	"luffa",
 	"lyra2re",
 	"lyra2rev2",
+	"lyra2rev3",
 	"lyra2revc0ban",
 	"myr-gr",
 	"nist5",
@@ -286,6 +288,7 @@ Options:\n\
                           luffa        Luffa\n\
                           lyra2re      Lyra2RE\n\
                           lyra2rev2    Lyra2REv2 (Vertcoin)\n\
+			  lyra2rev3    Lyra2REv3 (VIPSTARCOIN-MV Only)\n\
                           lyra2revc0banLyra2REvc0ban (c0ban)\n\
                           myr-gr       Myriad-Groestl\n\
                           neoscrypt    NeoScrypt(128, 2, 1)\n\
@@ -559,6 +562,9 @@ static bool work_decode(const json_t *val, struct work *work)
 		allow_mininginfo = false;
 		data_size = 192;
 		adata_sz = 180/4;
+	} else if (opt_algo == ALGO_LYRA2REV3) {
+		data_size = 192;
+		adata_sz = data_size/4;
 	}
 
 	if (jsonrpc_2) {
@@ -611,6 +617,10 @@ static bool work_decode(const json_t *val, struct work *work)
 				algo_names[opt_algo], work->height, netinfo);
 			net_blocks = work->height - 1;
 		}
+	} else if (opt_algo == ALGO_LYRA2REV3) {
+		work->data[45] = 0x00800000;
+		work->data[46] = 0x00000000;
+		work->data[47] = 0x000005a8;
 	}
 
 	return true;
@@ -1232,6 +1242,9 @@ static bool submit_upstream_work(CURL *curl, struct work *work)
 		} else if (opt_algo == ALGO_DECRED) {
 			/* bigger data size : 180 + terminal hash ending */
 			data_size = 192;
+		} else if(opt_algo == ALGO_VIPSTAR){
+			data_size = 192;
+			adata_sz = data_size / 4;
 		}
 		adata_sz = data_size / sizeof(uint32_t);
 		if (opt_algo == ALGO_DECRED) adata_sz = 180 / 4; // dont touch the end tag
@@ -1290,6 +1303,9 @@ static const char *gbt_lp_req =
 static const char *gbt_segwit_lp_req =
 	"{\"method\": \"getblocktemplate\", \"params\": [{\"capabilities\": "
 	GBT_CAPABILITIES ", \"rules\":[\"segwit\"] ,\"longpollid\": \"%s\"}], \"id\":0}\r\n";
+static const char *gbt_vips_req =
+	"{\"method\": \"getblocktemplate\", \"params\": "
+	"[{\"rules\": [\"segwit\"]}], \"id\":9}\r\n";
 
 static bool get_upstream_work(CURL *curl, struct work *work)
 {
@@ -1305,7 +1321,11 @@ start:
 		char s[128];
 		snprintf(s, 128, "{\"method\": \"getjob\", \"params\": {\"id\": \"%s\"}, \"id\":1}\r\n", rpc2_id);
 		val = json_rpc2_call(curl, rpc_url, rpc_userpass, s, NULL, 0);
-	} else {
+	} else if(opt_algo == ALGO_VIPSTAR){
+			val = json_rpc_call(curl, rpc_url, rpc_userpass,
+		                    have_gbt ? gbt_vips_req : getwork_req,
+		                    &err, have_gbt ? JSON_RPC_QUIET_404 : 0);
+        } else {
 		val = json_rpc_call(curl, rpc_url, rpc_userpass,
 		                    have_gbt ? (opt_segwit_mode? gbt_segwit_req: gbt_req) : getwork_req,
 		                    &err, have_gbt ? JSON_RPC_QUIET_404 : 0);
@@ -1699,6 +1719,17 @@ static void stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 			sctx->bloc_height = work->data[32];
 			//applog_hex(work->data, 180);
 			//applog_hex(&work->data[36], 36);
+		} else if (opt_algo == ALGO_LYRA2REV3) {
+		for (i = 0; i < 8; i++)
+			work->data[9 + i] = be32dec((uint32_t *)merkle_root + i);
+		work->data[17] = le32dec(sctx->job.ntime);
+		work->data[18] = le32dec(sctx->job.nbits);
+		for (i = 0; i < 8; i++)
+			work->data[20 + i] = le32dec((uint32_t *)sctx->job.stateroot + i);
+		for (i = 0; i < 8; i++)
+			work->data[28 + i] = le32dec((uint32_t *)sctx->job.utxoroot + i);
+		work->data[44] = 0xffffffff;
+		if (opt_debug) applog_hex(work->data, 181);
 		} else {
 			work->data[17] = le32dec(sctx->job.ntime);
 			work->data[18] = le32dec(sctx->job.nbits);
@@ -1738,6 +1769,7 @@ static void stratum_gen_work(struct stratum_ctx *sctx, struct work *work)
 			case ALGO_DMD_GR:
 			case ALGO_GROESTL:
 			case ALGO_LYRA2REV2:
+			case ALGO_LYRA2REV3:
 			case ALGO_LYRA2REVC0BAN:
 				work_set_target(work, sctx->job.diff / (256.0 * opt_diff_factor));
 				break;
@@ -2046,6 +2078,7 @@ static void *miner_thread(void *userdata)
 				break;
 			case ALGO_LYRA2:
 			case ALGO_LYRA2REV2:
+			case ALGO_LYRA2REV3:
 			case ALGO_LYRA2REVC0BAN:
 				max64 = 0xffff;
 				break;
@@ -2152,6 +2185,8 @@ static void *miner_thread(void *userdata)
 			break;
 		case ALGO_LYRA2REV2:
 			rc = scanhash_lyra2rev2(thr_id, &work, max_nonce, &hashes_done);
+		case ALGO_LYRA2REV3:
+			rc = scanhash_lyra2rev3(thr_id, &work, max_nonce, &hashes_done);
 		case ALGO_LYRA2REVC0BAN:
 			rc = scanhash_lyra2revc0ban(thr_id, &work, max_nonce, &hashes_done);
 			break;
@@ -2714,6 +2749,8 @@ void parse_arg(int key, char *arg)
 				i = opt_algo = ALGO_LYRA2;
 			else if (!strcasecmp("lyra2v2", arg))
 				i = opt_algo = ALGO_LYRA2REV2;
+			else if (!strcasecmp("lyra2v3", arg))
+				i = opt_algo = ALGO_LYRA2REV3;
 			else if (!strcasecmp("scryptjane", arg))
 				i = opt_algo = ALGO_SCRYPTJANE;
 			else if (!strcasecmp("sibcoin", arg))
